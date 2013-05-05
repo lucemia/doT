@@ -8,7 +8,7 @@ doT.py compile the template to a pure javascript function in server side; theref
 
 ### Here is an example:
 
-#### With client side template 
+#### Use client side template 
 
 ```html
 <html>
@@ -24,7 +24,7 @@ doT.py compile the template to a pure javascript function in server side; theref
 </html>
 ```
 
-With doT.py, you write:
+Use doT.py, you write:
 ```html
 <html>
 <!-- without loading template engine -->
