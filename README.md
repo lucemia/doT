@@ -2,46 +2,53 @@ doT.py
 ======
 
 A python implementation of the famous js template engine. doT.js. http://olado.github.io/doT/index.html.
-It do excetly the same thing as doT.js except can be run in Server side without Node.js
+It do excetly the same thing as doT.js except written in python. Thus, it can be used in python web framework.
 
-doT.py compile the template in server to a pure javascript function, therefore it can later be evalute in client side without any dependecny. It allows using client side template tech without template engine.
-to mininal the depenance and loading for client side.
+doT.py compile the template to a pure javascript function in server side; therefore client side can evaluate the template later without any dependency. Which means it saves the time for client to load template engine and to load template file. In short, doT.py allows using client side template tech without include a template engine in client side.
 
-Which means it saves the time for client
-1) wait the template engine loading.
-2) wait the template loading.
+### Here is an example:
 
-Here is an example:
-
-With client side template engine to load ajax data.
+#### With client side template 
 
 ```html
 <html>
-<script type="text/javascript" src="[path_to_template_engine]"></script>
-<div id=""
-<script>
-
+<!-- load template engine -->
+<script type="text/javascript" src="doT.js"></script>
+<div id="container">
+<script type="text/javascript">
+     // Compile template function
+     var tempFn = doT.template("<h1>Here is a sample template {{=it.foo}}</h1>");
+     var resultText = tempFn({foo: 'with doT'});
+     document.getElementById('container').innerHtml = resultText;
 </script>
-
 </html>
 ```
 
 With doT.py, you write:
 ```html
-
+<html>
+<!-- without loading template engine -->
+<div id="container">
 <script type="text/javascript">
-    var fn = {{ js_template("123.html") }};
-    var body.innerHtml = fn(data);
+     // Compile template function
+     var tempFn = {{ js_template('<h1>Here is a sample template {{=it.foo}}</h1>') }};
+     var resultText = tempFn({foo: 'with doT'});
+     document.getElementById('container').innerHtml = resultText;
 </script>
+</html>```
 
-```
-it compiled to
-
+it will automatically compiled to
 ```html
+<html>
+<!-- without loading template engine -->
+<div id="container">
 <script type="text/javascript">
-    var fn = {{ js_template("123.html") }};
-    var body.innerHtml = fn(data);
+     // Compile template function
+     var tempFn = function anonymous(it) { var out='"<h1>Here is a sample template '+(it.foo)+'</h1>"';return out; };
+     var resultText = tempFn({foo: 'with doT'});
+     document.getElementById('container').innerHtml = resultText;
 </script>
+</html>
 ```
 
 Django Support:
