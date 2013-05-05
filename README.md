@@ -35,7 +35,8 @@ With doT.py, you write:
      var resultText = tempFn({foo: 'with doT'});
      document.getElementById('container').innerHtml = resultText;
 </script>
-</html>```
+</html>
+```
 
 it will automatically compiled to
 ```html
