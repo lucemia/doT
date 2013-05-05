@@ -24,7 +24,7 @@ doT.py compile the template to a pure javascript function in server side; theref
 </html>
 ```
 
-Use doT.py, you write:
+#### Use doT.py, you write:
 ```html
 <html>
 <!-- without loading template engine -->
@@ -38,7 +38,7 @@ Use doT.py, you write:
 </html>
 ```
 
-it will automatically compiled to
+#### it will automatically compiled to
 ```html
 <html>
 <!-- without loading template engine -->
