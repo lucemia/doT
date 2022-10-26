@@ -5,6 +5,7 @@ description = "A python implementation of the famous js template engine. doT.js.
 authors = ["lucemia <lucemia@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "doT", from = "src" }]
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=2.7"
