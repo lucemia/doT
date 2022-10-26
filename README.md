@@ -6,9 +6,13 @@ It do excetly the same thing as doT.js except written in python. Thus, it can be
 
 doT.py compile the template to a pure javascript function in server side; therefore client side can evaluate the template later without any dependency. Which means it saves the time for client to load template engine and to load template file. In short, doT.py allows using client side template tech without include a template engine in client side.
 
+## Installation
+
+`pip install doT-js-py`
+
 ### Here is an example:
 
-#### Use client side template 
+#### Use client side template
 
 ```html
 <html>
