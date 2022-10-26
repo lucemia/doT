@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "dot-py"
+name = "dot-js-py"
 version = "0.0.0"
 description = "A python implementation of the famous js template engine. doT.js."
 authors = ["lucemia <lucemia@gmail.com>"]
