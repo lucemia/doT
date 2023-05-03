@@ -49,10 +49,80 @@ startend: StartEnd = StartEnd()
 skip: str = "$^"
 
 
-def resolveDefs(c, tmpl, _def):
-    # ignore the pre compile stage because we use it as backend translate.
+import re
 
-    return tmpl
+
+def resolve_defs(c, block, def_dict):
+    def skip(match):
+        return ""
+
+    if isinstance(block, str):
+        block_str = block
+    else:
+        block_str = block.__str__()
+
+    # Replace c.define
+    define = c.get("define", skip)
+
+    def replacement(match):
+        code, assign, value = match.groups()
+        if code.startswith("def."):
+            code = code[4:]
+
+        if code not in def_dict:
+            if assign == ":":
+                if c.get("defineParams", None):
+
+                    def sub_replacement(m):
+                        param, v = m.groups()
+                        def_dict[code] = {"arg": param, "text": v}
+                        return ""
+
+                    pattern = re.compile(c["defineParams"])
+                    value = pattern.sub(sub_replacement, value)
+
+                if code not in def_dict:
+                    def_dict[code] = value
+            else:
+                exec(f"def_dict['{code}'] = {value}", {"def": def_dict})
+
+        return ""
+
+    pattern = re.compile(define)
+    block_str = pattern.sub(replacement, block_str)
+
+    # Replace c.use
+    use = c.get("use", skip)
+
+    def replacement(match):
+        code = match.group(1)
+
+        if c.get("useParams", None):
+
+            def sub_replacement(m):
+                s, d, param = m.groups()
+                if d in def_dict and "arg" in def_dict[d] and param:
+                    rw = (d + ":" + param).replace("'", "_").replace("\\", "_")
+                    def_dict["__exp"] = def_dict.get("__exp", {})
+                    def_dict["__exp"][rw] = re.sub(
+                        r"(^|[^\\w$])" + re.escape(def_dict[d]["arg"]) + r"([^\\w$])",
+                        r"\1" + param + r"\2",
+                        def_dict[d]["text"],
+                    )
+                    return s + f"def.__exp['{rw}']"
+
+            pattern = re.compile(c["useParams"])
+            code = pattern.sub(sub_replacement, code)
+
+        def_dict_eval = eval(code, {"def": def_dict})
+        return (
+            resolve_defs(c, def_dict_eval, def_dict) if def_dict_eval else def_dict_eval
+        )
+
+    pattern = re.compile(use)
+    block_str = pattern.sub(replacement, block_str)
+
+    return block_str
 
 
 def unescape(code: str) -> str:
