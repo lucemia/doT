@@ -2,7 +2,7 @@
 # translate doT.js
 
 import re
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Union
 
 version = "1.1.1"
 
@@ -30,7 +30,7 @@ template_settings: TemplateSettings = TemplateSettings()
 
 
 def replace(
-    original_str: str, pattern: str, repl_func: Callable[[re.Match], str] | str
+    original_str: str, pattern: str, repl_func: Union[Callable[[re.Match], str], str]
 ) -> str:
     return re.sub(pattern, repl_func, original_str)
 
