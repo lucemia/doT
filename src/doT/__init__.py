@@ -2,9 +2,9 @@
 # translate doT.js
 
 import re
-from typing import NamedTuple
+from typing import Callable, NamedTuple
 
-version = "1.0.0"
+version = "1.1.1"
 
 
 class TemplateSettings(NamedTuple):
@@ -26,6 +26,42 @@ class TemplateSettings(NamedTuple):
 
 
 template_settings: TemplateSettings = TemplateSettings()
+
+
+# doT.encodeHTMLSource = function(doNotSkipEncoded) {
+# 		var encodeHTMLRules = { "&": "&#38;", "<": "&#60;", ">": "&#62;", '"': "&#34;", "'": "&#39;", "/": "&#47;" },
+# 			matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
+# 		return function(code) {
+# 			return code ? code.toString().replace(matchHTML, function(m) {return encodeHTMLRules[m] || m;}) : "";
+# 		};
+# 	};
+
+
+def encodeHTMLsource(do_not_skip_encoded: bool) -> Callable[[str], str]:
+    encode_HTML_rules = {
+        "&": "&#38;",
+        "<": "&#60;",
+        ">": "&#62;",
+        '"': "&#34;",
+        "'": "&#39;",
+        "/": "&#47;",
+    }
+    match_HTML = (
+        re.compile(r'[&<>"\'\/]')
+        if do_not_skip_encoded
+        else re.compile(r'&(?!#?\w+;)|<|>|"|\'|\/')
+    )
+
+    def encode(code: str) -> str:
+        return (
+            match_HTML.sub(
+                lambda m: encode_HTML_rules.get(m.group(0), m.group(0)), str(code)
+            )
+            if code
+            else ""
+        )
+
+    return encode
 
 
 class Symbol(NamedTuple):
