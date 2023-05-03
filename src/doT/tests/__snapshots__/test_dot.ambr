@@ -1,4 +1,4 @@
 # serializer version: 1
 # name: test_template
-  "function anonymous(it) {var out='var out=\\$&{{?it.options == 1\\$&n}}Option 1{{?? it.options == 2\\$&n}}Option 2{{??\\$&n}}Other option{{?}}:\\$&n\\$&n More text';return out;';return out;}"
+  "function anonymous(it) {var out='';if(it.options == 1\\n){out+='Option 1';}else if(it.options == 2\\n){out+='Option 2';}else if(\\n){out+='Other option';}out+=':\\n\\n More text';return out;}"
 # ---
