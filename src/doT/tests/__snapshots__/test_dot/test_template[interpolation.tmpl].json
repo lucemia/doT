@@ -1,0 +1,1 @@
+"function anonymous(it) {var out='<div>Hi '+(it.name)+'!</div>\n<div>'+(it.age || '')+'</div>';return out;}"

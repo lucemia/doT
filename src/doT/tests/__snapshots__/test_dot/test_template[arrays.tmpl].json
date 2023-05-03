@@ -1,0 +1,1 @@
+"function anonymous(it) {var out='';var arr1=it.array;if(arr1){var value,index=-1,l1=arr1.length-1;while(index<l1){value=arr1[index+=1];out+='\n<div>'+(value)+'!</div>\n';} } out+='';return out;}"

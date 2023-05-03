@@ -1,0 +1,1 @@
+"function anonymous(it) {var out=''; for(var prop in it) { out+='\n<div>'+(prop)+'</div>\n'; } out+='';return out;}"

@@ -1,0 +1,1 @@
+"function anonymous(it) {var out='';if(it.options == 1){out+='Option 1';}else if(it.options == 2){out+='Option 2';}else{out+='Other option';}out+=':\n\nMore text';return out;}"
