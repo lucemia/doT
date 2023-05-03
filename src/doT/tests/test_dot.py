@@ -1,8 +1,16 @@
+from pathlib import Path
+
+import pytest
+
 from .. import template, template_settings
 
 
-def test_template(snapshot):
+@pytest.mark.parametrize(
+    "case", (Path(__file__).parent / "test_dot").glob("*.tmpl"), ids=lambda x: x.name
+)
+def test_template(snapshot, case: Path):
     template_settings["strip"] = False
 
-    INPUT = r"{{?it.options == 1\n}}Option 1{{?? it.options == 2\n}}Option 2{{??\n}}Other option{{?}}:\n\n More text"
-    assert snapshot == template(INPUT, template_settings)
+    with case.open("r", encoding="utf-8") as ifile:
+        _template = ifile.read()
+        assert snapshot == template(_template, template_settings)

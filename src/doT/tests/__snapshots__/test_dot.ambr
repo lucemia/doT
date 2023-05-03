@@ -1,4 +1,52 @@
 # serializer version: 1
-# name: test_template
-  "function anonymous(it) {var out='';if(it.options == 1\\n){out+='Option 1';}else if(it.options == 2\\n){out+='Option 2';}else if(\\n){out+='Other option';}out+=':\\n\\n More text';return out;}"
+# name: test_template[arrays.tmpl]
+  '''
+  function anonymous(it) {var out='';var arr1=it.array;if(arr1){var value,index=-1,l1=arr1.length-1;while(index<l1){value=arr1[index+=1];out+='
+  <div>'+(value)+'!</div>
+  ';} } out+='';return out;}
+  '''
+# ---
+# name: test_template[conditionals.tmpl]
+  '''
+  function anonymous(it) {var out='';if(it.name){out+='
+  <div>Oh, I love your name, '+(it.name)+'!</div>
+  ';}else if(it.age === 0){out+='
+  <div>Guess nobody named you yet!</div>
+  ';}else{out+='
+  You are '+(it.age)+' and still don't have a name?
+  ';}out+='';return out;}
+  '''
+# ---
+# name: test_template[encode.tmpl]
+  "function anonymous(it) {var out='Visit '+(it.uri||'').toString().encodeHTML()+'';return out;}"
+# ---
+# name: test_template[evaluation.tmpl]
+  "function anonymous(it) {var out='';return out;}"
+# ---
+# name: test_template[interpolation.tmpl]
+  '''
+  function anonymous(it) {var out='<div>Hi {
+      {=it.name
+      }
+  }!</div>
+  <div>{
+      {=it.age || ''
+      }
+  }</div>';return out;}
+  '''
+# ---
+# name: test_template[issue_4.tmpl]
+  '''
+  function anonymous(it) {var out='';if(it.options == 1){out+='Option 1';}else if(it.options == 2){out+='Option 2';}else{out+='Other option';}out+=':
+  
+  More text';return out;}
+  '''
+# ---
+# name: test_template[partials.tmpl]
+  '''
+  function anonymous(it) {var out='';##def.snippet: <div>'+(it.name)+'</div>{{#def.jokeout+='
+  #}}
+  
+  ';#def.snippetout+='';return out;}
+  '''
 # ---
