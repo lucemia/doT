@@ -102,24 +102,24 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
     indv = None
 
     _str = resolveDefs(c, tmpl, _def or {}) if (c.use or c.define) else tmpl
-    # print(f"resolveDefs: {_str}")
+    print(f"resolveDefs: {_str}")
 
     if c.strip:
         # remove white space
         _str = re.sub(r"(^|\r|\n)\t* +| +\t*(\r|\n|$)", " ", _str)
         _str = re.sub(r"\r|\n|\t|\/\*[\s\S]*?\*\/", "", _str)
 
-    # print(f"strip: {_str}")
+    print(f"strip: {_str}")
     _str = replace(_str, r"['\\]", r"\\\g<0>")
 
-    # print(f"replace: {_str}")
+    print(f"replace: {_str}")
 
     def _interpolate(match: re.Match) -> str:
         code = match.groups()[0]
         return cse.start + unescape(code) + cse.end
 
     _str = replace(_str, c.interpolate or skip, _interpolate)
-    # print(f"interpolate: {_str}")
+    print(f"interpolate: {_str}")
 
     def _encode(match: re.Match) -> str:
         nonlocal needhtmlencode
@@ -128,7 +128,7 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
         return cse.start + unescape(code) + cse.end
 
     _str = replace(_str, c.encode or skip, _encode)
-    # print(f"encode: {_str}")
+    print(f"encode: {_str}")
 
     def _conditional(match: re.Match) -> str:
         elsecode = match.groups()[0]
@@ -146,7 +146,7 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
                 return "';}out+='"
 
     _str = replace(_str, c.conditional or skip, _conditional)
-    # print(f"conditional: {_str}")
+    print(f"conditional: {_str}")
 
     def _iterate(match: re.Match) -> str:
         iterate = match.groups()[0]
@@ -191,14 +191,14 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
         )
 
     _str = replace(_str, c.iterate or skip, _iterate)
-    # print(f"iterate: {_str}")
+    print(f"iterate: {_str}")
 
     def _evalute(match: re.Match) -> str:
         code = match.groups()[0]
         return "';" + unescape(code) + "out+='"
 
     _str = replace(_str, c.evaluate or skip, _evalute)
-    # print(f"evaluate: {_str}")
+    print(f"evaluate: {_str}")
 
     _str = replace(_str, r"\n", "\\n")
     _str = replace(_str, r"\t", "\\t")
@@ -206,7 +206,7 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
     _str = replace(_str, r"(\s|;|\}|^|\{)out\+='';", r"\1")
     _str = replace(_str, r"\+''", "")
 
-    # print(f"final: {_str}")
+    print(f"final: {_str}")
     # if (needhtmlencode):
     #     if (c.selfcontained or c.doNotSkipEncoded):
 
