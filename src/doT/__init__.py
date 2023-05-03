@@ -50,7 +50,7 @@ startend: StartEnd = StartEnd()
 skip = "$^"
 
 
-def resolveDefs(c, tmpl, _def):
+def resolveDefs(c, tmpl: str, _def) -> str:
     # ignore the pre compile stage because we use it as backend translate.
 
     return tmpl
@@ -62,7 +62,7 @@ def unescape(code: str) -> str:
     return code
 
 
-def template(tmpl, c: TemplateSettings = None, _def=None):
+def template(tmpl: str, c: TemplateSettings = None, _def=None):
     c = c or template_settings
     #    needhtmlencode = None
     sid = 0
@@ -127,7 +127,7 @@ def template(tmpl, c: TemplateSettings = None, _def=None):
             + "+=1];out+='"
         )
 
-    def _evalute(code):
+    def _evalute(code: str) -> str:
         return "';" + unescape(code) + "out+='"
 
     _str = resolveDefs(c, tmpl, _def or {}) if (c.use or c.define) else tmpl
