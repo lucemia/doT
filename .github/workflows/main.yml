@@ -23,4 +23,4 @@ jobs:
           poetry install --with test
       - name: Test with pytest
         run: |
-          py.test src
+          poetry run pytest src
