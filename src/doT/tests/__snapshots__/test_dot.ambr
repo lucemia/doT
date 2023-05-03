@@ -1,0 +1,4 @@
+# serializer version: 1
+# name: test_template
+  "function anonymous(it) {var out='';if(it.options == 1\\n){out+='Option 1';}else if(it.options == 2\\n){out+='Option 2';}else if(\\n){out+='Other option';}out+=':\\n\\n More text';return out;}"
+# ---
