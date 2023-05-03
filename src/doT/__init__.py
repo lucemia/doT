@@ -23,18 +23,16 @@ class TemplateSettings(NamedTuple):
     strip: bool = True
     append: bool = True
     selfcontained: bool = False
+    doNotSkipEncoded: bool = False
 
 
 template_settings: TemplateSettings = TemplateSettings()
 
 
-# doT.encodeHTMLSource = function(doNotSkipEncoded) {
-# 		var encodeHTMLRules = { "&": "&#38;", "<": "&#60;", ">": "&#62;", '"': "&#34;", "'": "&#39;", "/": "&#47;" },
-# 			matchHTML = doNotSkipEncoded ? /[&<>"'\/]/g : /&(?!#?\w+;)|<|>|"|'|\//g;
-# 		return function(code) {
-# 			return code ? code.toString().replace(matchHTML, function(m) {return encodeHTMLRules[m] || m;}) : "";
-# 		};
-# 	};
+def replace(
+    original_str: str, pattern: str, repl_func: Callable[[re.Match], str] | str
+) -> str:
+    return re.sub(pattern, repl_func, original_str)
 
 
 def encodeHTMLsource(do_not_skip_encoded: bool) -> Callable[[str], str]:
@@ -67,23 +65,21 @@ def encodeHTMLsource(do_not_skip_encoded: bool) -> Callable[[str], str]:
 class Symbol(NamedTuple):
     start: str
     end: str
-    endencode: str
+    startencode: str
 
 
 class StartEnd(NamedTuple):
-    append: Symbol = Symbol(
-        start="'+(", end=")+'", endencode="||'').toString().encodeHTML()+'"
-    )
+    append: Symbol = Symbol(start="'+(", end=")+'", startencode="'+encodeHTML(")
     split: Symbol = Symbol(
         start="';out+=(",
         end=");out+='",
-        endencode="||'').toString().encodeHTML();out+='",
+        startencode="';out+=encodeHTML(",
     )
 
 
 startend: StartEnd = StartEnd()
 
-skip = "$^"
+skip = r"$^"
 
 
 def resolveDefs(c, tmpl: str, _def) -> str:
@@ -100,19 +96,44 @@ def unescape(code: str) -> str:
 
 def template(tmpl: str, c: TemplateSettings = None, _def=None):
     c = c or template_settings
-    #    needhtmlencode = None
-    sid = 0
-    #    indv = None
-
     cse = startend.append if c.append else startend.split
+    needhtmlencode = None
+    sid = 0
+    indv = None
 
-    def _interpolate(code: str) -> str:
+    _str = resolveDefs(c, tmpl, _def or {}) if (c.use or c.define) else tmpl
+    # print(f"resolveDefs: {_str}")
+
+    if c.strip:
+        # remove white space
+        _str = re.sub(r"(^|\r|\n)\t* +| +\t*(\r|\n|$)", " ", _str)
+        _str = re.sub(r"\r|\n|\t|\/\*[\s\S]*?\*\/", "", _str)
+
+    # print(f"strip: {_str}")
+    _str = replace(_str, r"['\\]", r"\\\g<0>")
+
+    # print(f"replace: {_str}")
+
+    def _interpolate(match: re.Match) -> str:
+        code = match.groups()[0]
         return cse.start + unescape(code) + cse.end
 
-    def _encode(code: str) -> str:
-        return cse.start + unescape(code) + cse.endencode
+    _str = replace(_str, c.interpolate or skip, _interpolate)
+    # print(f"interpolate: {_str}")
 
-    def _conditional(elsecode: str, code: str) -> str:
+    def _encode(match: re.Match) -> str:
+        nonlocal needhtmlencode
+        needhtmlencode = True
+        code = match.groups()[0]
+        return cse.start + unescape(code) + cse.end
+
+    _str = replace(_str, c.encode or skip, _encode)
+    # print(f"encode: {_str}")
+
+    def _conditional(match: re.Match) -> str:
+        elsecode = match.groups()[0]
+        code = match.groups()[1]
+
         if elsecode:
             if code:
                 return "';}else if(" + unescape(code) + "){out+='"
@@ -124,8 +145,16 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
             else:
                 return "';}out+='"
 
-    def _iterate(iterate, vname, iname, sid=sid):
-        if not iterate or not vname:
+    _str = replace(_str, c.conditional or skip, _conditional)
+    # print(f"conditional: {_str}")
+
+    def _iterate(match: re.Match) -> str:
+        iterate = match.groups()[0]
+        vname = match.groups()[1]
+        iname = match.groups()[2]
+        nonlocal sid, indv
+
+        if not iterate:
             return "';} } out+='"
 
         sid += 1
@@ -133,8 +162,6 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
         iterate = unescape(iterate)
 
         _sid = str(sid)
-        #        print iterate, vname, iname, _sid
-
         return (
             "';var arr"
             + _sid
@@ -163,52 +190,24 @@ def template(tmpl: str, c: TemplateSettings = None, _def=None):
             + "+=1];out+='"
         )
 
-    def _evalute(code: str) -> str:
+    _str = replace(_str, c.iterate or skip, _iterate)
+    # print(f"iterate: {_str}")
+
+    def _evalute(match: re.Match) -> str:
+        code = match.groups()[0]
         return "';" + unescape(code) + "out+='"
 
-    _str = resolveDefs(c, tmpl, _def or {}) if (c.use or c.define) else tmpl
+    _str = replace(_str, c.evaluate or skip, _evalute)
+    # print(f"evaluate: {_str}")
 
-    if c.strip:
-        # remove white space
-        _str = re.sub(r"(^|\r|\n)\t* +| +\t*(\r|\n|$)", " ", _str)
-        _str = re.sub(r"\r|\n|\t|\/\*[\s\S]*?\*\/", "", _str)
+    _str = replace(_str, r"\n", "\\n")
+    _str = replace(_str, r"\t", "\\t")
+    _str = replace(_str, r"\r", "\\r")
+    _str = replace(_str, r"(\s|;|\}|^|\{)out\+='';", r"\1")
+    _str = replace(_str, r"\+''", "")
 
-    # _str = re.sub(r"|\\", '\\$&', _str)
-
-    if c.interpolate:
-        _str = re.sub(c.interpolate, lambda i: _interpolate(i.groups()[0]), _str)
-
-    if c.encode:
-        _str = re.sub(c.encode, lambda i: _encode(i.groups()[0]), _str)
-
-    if c.conditional:
-        _str = re.sub(
-            c.conditional, lambda i: _conditional(i.groups()[0], i.groups()[1]), _str
-        )
-
-    if c.iterate:
-        _str = re.sub(
-            c.iterate,
-            lambda i: _iterate(i.groups()[0], i.groups()[1], i.groups()[2]),
-            _str,
-        )
-
-    if c.evaluate:
-        _str = re.sub(c.evaluate, lambda i: _evalute(i.groups()[0]), _str)
-
-    # HINT:
-    """.replace(/\n/g, '\\n').replace(/\t/g, '\\t').replace(/\r/g, '\\r')
-            .replace(/(\s|;|\}|^|\{)out\+='';/g, '$1').replace(/\+''/g, '')
-            .replace(/(\s|;|\}|^|\{)out\+=''\+/g,'$1out+=');
-
-        if (needhtmlencode && c.selfcontained) {
-            str = "String.prototype.encodeHTML=(" + encodeHTMLSource.toString() + "());" + str;
-        }
-        try {
-            return new Function(c.varname, str);
-        } catch (e) {
-            if (typeof console !== 'undefined') console.log("Could not create a template function: " + str);
-            throw e;
-        }"""
+    # print(f"final: {_str}")
+    # if (needhtmlencode):
+    #     if (c.selfcontained or c.doNotSkipEncoded):
 
     return "function anonymous(" + c.varname + ") {var out='" + _str + "';return out;}"

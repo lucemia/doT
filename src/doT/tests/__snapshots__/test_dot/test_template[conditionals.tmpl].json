@@ -1,0 +1,1 @@
+"function anonymous(it) {var out='';if(it.name){out+='\n<div>Oh, I love your name, '+(it.name)+'!</div>\n';}else if(it.age === 0){out+='\n<div>Guess nobody named you yet!</div>\n';}else{out+='\nYou are '+(it.age)+' and still don\\'t have a name?\n';}out+='';return out;}"
