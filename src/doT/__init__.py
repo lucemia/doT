@@ -2,66 +2,81 @@
 # translate doT.js
 
 import re
+from typing import NamedTuple
 
 version = "1.0.0"
-template_settings = {
-    "evaluate": r"\{\{([\s\S]+?\}?)\}\}",
-    "interpolate": r"\{\{=([\s\S]+?)\}\}",
-    "encode": r"\{\{!([\s\S]+?)\}\}",
-    "use": r"\{\{#([\s\S]+?)\}\}",
-    "useParams": r"(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})",
-    "define": r"\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}",
-    "defineParams": r"^\s*([\w$]+):([\s\S]+)",
-    "conditional": r"\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}",
-    "iterate": r"\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})",
-    "varname": "it",
-    "strip": True,
-    "append": True,
-    "selfcontained": False,
-}
 
 
-startend = {
-    "append": {
-        "start": "'+(",
-        "end": ")+'",
-        "endencode": "||'').toString().encodeHTML()+'",
-    },
-    "split": {
-        "start": "';out+=(",
-        "end": ");out+='",
-        "endencode": "||'').toString().encodeHTML();out+='",
-    },
-}
+class TemplateSettings(NamedTuple):
+    evaluate: str = r"\{\{([\s\S]+?\}?)\}\}"
+    interpolate: str = r"\{\{=([\s\S]+?)\}\}"
+    encode: str = r"\{\{!([\s\S]+?)\}\}"
+    use: str = r"\{\{#([\s\S]+?)\}\}"
+    useParams: str = r"(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})"
+    define: str = r"\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}"
+    defineParams: str = r"^\s*([\w$]+):([\s\S]+)"
+    conditional: str = r"\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}"
+    iterate: str = (
+        r"\{\{~\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})"
+    )
+    varname: str = "it"
+    strip: bool = True
+    append: bool = True
+    selfcontained: bool = False
+
+
+template_settings: TemplateSettings = TemplateSettings()
+
+
+class Symbol(NamedTuple):
+    start: str
+    end: str
+    endencode: str
+
+
+class StartEnd(NamedTuple):
+    append: Symbol = Symbol(
+        start="'+(", end=")+'", endencode="||'').toString().encodeHTML()+'"
+    )
+    split: Symbol = Symbol(
+        start="';out+=(",
+        end=");out+='",
+        endencode="||'').toString().encodeHTML();out+='",
+    )
+
+
+startend: StartEnd = StartEnd()
 
 skip = "$^"
 
 
-def resolveDefs(c, tmpl, _def):
+def resolveDefs(c, tmpl: str, _def) -> str:
     # ignore the pre compile stage because we use it as backend translate.
 
     return tmpl
 
 
-def unescape(code):
-    return re.sub(r"[\r\t\n]", " ", re.sub(r"\\('|\\)", "$1", code))
+def unescape(code: str) -> str:
+    code = re.sub(r"\\('|\\)", r"\1", code)
+    code = re.sub(r"[\r\t\n]", " ", code)
+    return code
 
 
-def template(tmpl, c=None, _def=None):
+def template(tmpl: str, c: TemplateSettings = None, _def=None):
     c = c or template_settings
     #    needhtmlencode = None
     sid = 0
     #    indv = None
 
-    cse = startend["append"] if c["append"] else startend["split"]
+    cse = startend.append if c.append else startend.split
 
-    def _interpolate(code):
-        return cse["start"] + unescape(code) + cse["end"]
+    def _interpolate(code: str) -> str:
+        return cse.start + unescape(code) + cse.end
 
-    def _encode(code):
-        return cse["start"] + unescape(code) + cse["endencode"]
+    def _encode(code: str) -> str:
+        return cse.start + unescape(code) + cse.endencode
 
-    def _conditional(elsecode, code):
+    def _conditional(elsecode: str, code: str) -> str:
         if elsecode:
             if code:
                 return "';}else if(" + unescape(code) + "){out+='"
@@ -112,38 +127,38 @@ def template(tmpl, c=None, _def=None):
             + "+=1];out+='"
         )
 
-    def _evalute(code):
+    def _evalute(code: str) -> str:
         return "';" + unescape(code) + "out+='"
 
-    _str = resolveDefs(c, tmpl, _def or {}) if (c["use"] or c["define"]) else tmpl
+    _str = resolveDefs(c, tmpl, _def or {}) if (c.use or c.define) else tmpl
 
-    if c.get("strip"):
+    if c.strip:
         # remove white space
         _str = re.sub(r"(^|\r|\n)\t* +| +\t*(\r|\n|$)", " ", _str)
         _str = re.sub(r"\r|\n|\t|\/\*[\s\S]*?\*\/", "", _str)
 
     # _str = re.sub(r"|\\", '\\$&', _str)
 
-    if c.get("interpolate"):
-        _str = re.sub(c["interpolate"], lambda i: _interpolate(i.groups()[0]), _str)
+    if c.interpolate:
+        _str = re.sub(c.interpolate, lambda i: _interpolate(i.groups()[0]), _str)
 
-    if c.get("encode"):
-        _str = re.sub(c["encode"], lambda i: _encode(i.groups()[0]), _str)
+    if c.encode:
+        _str = re.sub(c.encode, lambda i: _encode(i.groups()[0]), _str)
 
-    if c.get("conditional"):
+    if c.conditional:
         _str = re.sub(
-            c["conditional"], lambda i: _conditional(i.groups()[0], i.groups()[1]), _str
+            c.conditional, lambda i: _conditional(i.groups()[0], i.groups()[1]), _str
         )
 
-    if c.get("iterate"):
+    if c.iterate:
         _str = re.sub(
-            c["iterate"],
+            c.iterate,
             lambda i: _iterate(i.groups()[0], i.groups()[1], i.groups()[2]),
             _str,
         )
 
-    if c.get("evaluate"):
-        _str = re.sub(c["evaluate"], lambda i: _evalute(i.groups()[0]), _str)
+    if c.evaluate:
+        _str = re.sub(c.evaluate, lambda i: _evalute(i.groups()[0]), _str)
 
     # HINT:
     """.replace(/\n/g, '\\n').replace(/\t/g, '\\t').replace(/\r/g, '\\r')
@@ -160,6 +175,4 @@ def template(tmpl, c=None, _def=None):
             throw e;
         }"""
 
-    return (
-        "function anonymous(" + c["varname"] + ") {var out='" + _str + "';return out;}"
-    )
+    return "function anonymous(" + c.varname + ") {var out='" + _str + "';return out;}"

@@ -9,8 +9,8 @@ from .. import template, template_settings
     "case", (Path(__file__).parent / "test_dot").glob("*.tmpl"), ids=lambda x: x.name
 )
 def test_template(snapshot, case: Path):
-    template_settings["strip"] = False
+    setting = template_settings._replace(strip=False)
 
     with case.open("r", encoding="utf-8") as ifile:
         _template = ifile.read()
-        assert snapshot == template(_template, template_settings)
+        assert snapshot == template(_template, setting)
