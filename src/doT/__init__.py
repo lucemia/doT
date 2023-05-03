@@ -8,13 +8,11 @@ version = "1.0.0"
 
 
 class TemplateSettings(NamedTuple):
-    evaluate: str = r"\{\{([\s\S]+?(\}?)+)\}\}"
+    evaluate: str = r"\{\{([\s\S]+?\}?)\}\}"
     interpolate: str = r"\{\{=([\s\S]+?)\}\}"
     encode: str = r"\{\{!([\s\S]+?)\}\}"
     use: str = r"\{\{#([\s\S]+?)\}\}"
-    useParams: str = (
-        r"(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})",
-    )
+    useParams: str = r"(^|[^\w$])def(?:\.|\[[\'\"])([\w$\.]+)(?:[\'\"]\])?\s*\:\s*([\w$\.]+|\"[^\"]+\"|\'[^\']+\'|\{[^\}]+\})"
     define: str = r"\{\{##\s*([\w\.$]+)\s*(\:|=)([\s\S]+?)#\}\}"
     defineParams: str = r"^\s*([\w$]+):([\s\S]+)"
     conditional: str = r"\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}"
@@ -25,7 +23,6 @@ class TemplateSettings(NamedTuple):
     strip: bool = True
     append: bool = True
     selfcontained: bool = False
-    doNotSkipEncoded: bool = False
 
 
 template_settings: TemplateSettings = TemplateSettings()
